@@ -44,6 +44,29 @@ if (!isset($_SESSION['USER_ID']) || $_SESSION['USER_ID'] <= 0 ) {
         b {
             display: none;
         }
+        .toast {
+            visibility: hidden; 
+            min-width: 250px;
+            margin-left: -125px; 
+            background-color: #f44336; 
+            color: white; 
+            text-align: center; /* Centered text */
+            border-radius: 2px; /* Rounded corners */
+            padding: 16px; /* Padding */
+            position: fixed; /* Sit on top */
+            z-index: 1; /* Sit on top */
+            left: 50%; /* Center horizontally */
+            bottom: 30px; /* 30px from the bottom */
+            font-size: 17px; /* Font size */
+            transition: visibility 0s, opacity 0.5s linear; /* Fade in and out */
+            opacity: 0; /* Hidden by default */
+        }
+
+        .toast.show {
+            visibility: visible; /* Show the toast */
+            opacity: 1; /* Fade in the toast */
+        }
+
     </style>
 </head>
 <body>

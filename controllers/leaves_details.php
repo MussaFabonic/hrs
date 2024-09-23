@@ -2,6 +2,7 @@
 session_start();
     include('../models/leaves.php');
     $eT = getET($_REQUEST['userid']); 
+    $d['leaveid'] = $_REQUEST['leaveType'];
     $dets = getIdName('', 1,  $d['leaveid'], '', YEAR, $eT['emptypeid']);
     
     $response = array();

@@ -67,7 +67,7 @@
                 <form id="leaveForm">
                     <div class="form-group">
                         <label for="leaveType">Select Leave Type</label>
-                        <select id="leaveType" class="form-control select2" required>
+                        <select id="leaveType" class="form-control select2" required onChange="showLeaveStatus()">
                             <option value="" disabled selected>Select leave type</option>
                             <?php foreach($_SESSION['leaveTypes'] as $k=>$v){?>
                                 <option value="<?php echo $v['id']?>"><?php echo $v['name']?></option>
@@ -78,6 +78,7 @@
                     <table class="table" id="leaveStatus" style="display:none;">
                         <thead>
                             <tr>
+                                <th scope="col">Leave Name</th>
                                 <th scope="col">Total Allowed</th>
                                 <th scope="col">Taken</th>
                                 <th scope="col">Remaining</th>
@@ -85,6 +86,7 @@
                         </thead>
                         <tbody>
                             <tr>
+                                <td id="lname"></td>
                                 <td id="totAllowed"></td>
                                 <td id="totTaken"></td>
                                 <td id="totRemaining"></td>
@@ -111,53 +113,99 @@
 
 
 <script>
-    function submitLeaveForm() {
-        var myModalEl = document.getElementById('mediumModal');
-        const leaveType = document.getElementById('leaveType').value;
-        const fromDate = document.getElementById('fromDate').value;
-        const toDate = document.getElementById('toDate').value;
-        const userid = $('#userid').val();
-       
+        function showLeaveStatus() {
+            var leaveTypeId = $('#leaveType').val();
+            var userid = $('#userid').val();
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
 
-        if (leaveType && fromDate && toDate) {
             const formData = {
-                leaveType: leaveType,
-                fromDate: fromDate,
-                toDate: toDate,
+                leaveType: leaveTypeId,
                 userid: userid
             };
-
 
             $.ajax({
                 url: 'leaves_details.php',
                 type: 'POST',
                 data: formData,
                 success: function(response) {
-                    console.log('Response', response);
-                },
-                error: function(xhr, status, error) {
-                    console.error('AJAX Error:', status, error);
-                    alert('An error occurred while submitting the form.');
-                }
-            });
+                    $('#leaveStatus').hide();
+                    console.log(response);
+                    if (typeof response === 'string') {
+                        try {
+                            response = JSON.parse(response);
+                        } catch (error) {
+                            console.error('Parsing error:', error);
+                            return;
+                        }
+                    }
+                    if (response.success && response.details && response.details.length > 0) {
+                        const leaveDetails = response.details[0];
+                        console.log(leaveDetails);
 
-            $.ajax({
-                url: 'leaves.php',
-                type: 'POST',
-                data: formData,
-                success: function(response) {
-                    console.log('Response from server:', response);
-                    myModalEl.classList.remove('show');
-                    myModalEl.style.display = 'none';
-                    // location.reload();
+                        document.getElementById('lname').innerText = leaveDetails.text;
+                        document.getElementById('totAllowed').innerText = leaveDetails.total;
+                        document.getElementById('totTaken').innerText = leaveDetails.taken;
+                        document.getElementById('totRemaining').innerText = leaveDetails.bal;
+                        document.getElementById('leaveStatus').style.display = 'table';
+                        $('#leaveStatus').show();
+                    } else {
+                        console.error('Response structure is unexpected:', response);
+                    }
                 },
                 error: function(xhr, status, error) {
                     console.error('AJAX Error:', status, error);
                     alert('An error occurred while submitting the form.');
                 }
             });
-        } else {
-            alert('Please fill in all fields.');
         }
+        
+        function submitLeaveForm() {
+            var myModalEl = document.getElementById('mediumModal');
+            const leaveType = document.getElementById('leaveType').value;
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+            const userid = $('#userid').val();
+        
+            if (leaveType && fromDate && toDate) {
+                const formData = {
+                    leaveType: leaveType,
+                    fromDate: fromDate,
+                    toDate: toDate,
+                    userid: userid
+                };
+
+                const startDate = new Date(fromDate);
+                const endDate = new Date(toDate);
+
+                const differenceInTime = endDate - startDate;
+                const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+
+                var leaveBalance = $('#totRemaining').text();
+
+                if( differenceInDays > leaveBalance ){
+                    alert('You are Requesting More than the available Days');
+                    return false;
+                }else{
+                    $.ajax({
+                        url: 'leaves.php',
+                        type: 'POST',
+                        data: formData,
+                        success: function(response) {
+                            console.log('Response from server:', response);
+                            myModalEl.classList.remove('show');
+                            myModalEl.style.display = 'none';
+                            location.reload();
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('AJAX Error:', status, error);
+                            alert('An error occurred while submitting the form.');
+                        }
+                    });
+                }
+                
+            } else {
+                alert('Please fill in all fields.');
+            }
     }
 </script>
