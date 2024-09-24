@@ -18,7 +18,8 @@ session_start();
         $d['leaveid'] = $_REQUEST['leaveType'];
         $d['fromdte'] = $_REQUEST['fromDate'];
         $d['todte'] = $_REQUEST['toDate'];
-        $d['noofdays'] = $daysDifference +  1;
+        $d['noofdays'] = $daysDifference;
+        // $d['noofdays'] = $daysDifference +  1;
 
         $LeaveRecords = insert($d,'LeaveRecords');
     }

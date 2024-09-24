@@ -130,9 +130,10 @@
 		return fetchRows($sql);
 	}
 
-	function getLeavesTaken($staffId, $year=YEAR, $leaveId="") {
+	function getLeavesTaken($staffId, $year=YEAR, $leaveId="",$id="") {
 		$sql = "SELECT sum(datediff(if(todte > '" . $year . "-12-31', '" . $year . "-12-31', todte), fromdte) + 1) AS taken 
 				FROM leaverecords WHERE YEAR(fromdte) = " . $year . " AND leaveid = " . $leaveId . " AND staffid = " . $staffId;
+		if ( $id ) $sql .= " and id  != " . $id;
 		return fetchRow($sql);
 	}
 
@@ -141,6 +142,29 @@
 		$db_result = mysqli_query($db_connection, $sql);
 		if ( $db_result ) return mysqli_fetch_assoc($db_result);
 		else return false;
+	}
+
+	function delete($id, $status=0, $tableName="") {
+		$sql = 'update `' . $tableName . '` set status='.$status.' where id="'.$id.'"';
+		// echo $sql;die();
+		return executeQuery($sql);
+	}
+	function real_delete($id, $tableName) {
+		$sql = 'delete from `' . $tableName . '` where id="'.$id.'"';
+		return executeQuery($sql);
+	}
+
+	function update($id, $data,$tableName) {
+		$updateClause = array();
+		foreach ( $data as $iid=>$val ) {
+			$updateClause[] = '`' . $iid . '`' . ' = "' . str_replace('"', '\"',$val) . '"';
+		}
+		$updateClause = implode(', ', $updateClause);
+		$sql = 'update `' . $tableName . '` set ' . $updateClause . ' where id = "' . $id . '"';
+
+		// echo $sql.'<br/>';
+		// die('bulb');
+		return executeQuery($sql);
 	}
 
 ?>

@@ -2,7 +2,7 @@
     include('../database/db.php');
 
     function getAllDets($staffId, $year=YEAR) {
-        $sql = "SELECT lr.noofdays,s.name sname, l.name lname, lr.fromdte, lr.todte, lr.status, l.name as lv
+        $sql = "SELECT lr.id,lr.noofdays,s.name sname, l.name lname, lr.fromdte, lr.todte, lr.status, l.name as lv
                 FROM leaverecords as lr
                 INNER JOIN leaves as l ON lr.leaveid = l.id
                 INNER JOIN staffs as s ON lr.staffid = s.id
@@ -10,6 +10,19 @@
                 if ( $staffId ) $sql .= " AND lr.staffid = " . $staffId;
         $sql .= " ORDER BY lr.fromdte, 	lr.leaveid";
         return fetchRows($sql);
+    }
+
+    function getAllDetsEdit($staffId, $year=YEAR, $id="") {
+        $sql = "SELECT lr.leaveid as leaveid,lr.id,lr.staffid,lr.noofdays,s.name sname, l.name lname, lr.fromdte, lr.todte, lr.status, l.name as lv
+                FROM leaverecords as lr
+                INNER JOIN leaves as l ON lr.leaveid = l.id
+                INNER JOIN staffs as s ON lr.staffid = s.id
+                WHERE YEAR(lr.fromdte) = " . $year;
+                if ( $staffId ) $sql .= " AND lr.staffid = " . $staffId;
+                if ( $id ) $sql .= " AND lr.id = " . $id;
+        $sql .= " ORDER BY lr.fromdte, 	lr.leaveid";
+        // print_r($sql);die();
+        return fetchRow($sql);
     }
 
     function getAllLeaves($name="",$status= 1,$id="",$year="") {

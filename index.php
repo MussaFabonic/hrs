@@ -216,9 +216,6 @@ if (!isset($_SESSION['USER_ID']) || $_SESSION['USER_ID'] <= 0 ) {
                             $('#CardRows').append(cardHtml);
                         });
                         
-                    },
-                    error: function(xhr, status, error) {
-                        alert('An error occurred while submitting the form.');
                     }
                 });
             } else {

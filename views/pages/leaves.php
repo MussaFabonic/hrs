@@ -28,21 +28,39 @@
                             </thead>
                             <tbody>
                                 <? 
-                                // if(isset($_SESSION['leavesHistory']) && isset($_GET['id'])){
                                     $no = 0; foreach($_SESSION['leavesHistory'] as $key=>$value){?>
                                         <tr>
                                             <td><?php echo $no+1;?></td>
                                             <td><?php echo $value['sname'];?></td>
                                             <td><?php echo $value['lname'];?></td>
                                             <td><?php echo $value['noofdays'];?></td>
-                                            <td><?php echo $value['fromdte'];?></td>
-                                            <td><?php echo $value['todte'];?></td>
+                                            <td>
+                                                <?php
+                                                    $date = new DateTime($value['fromdte']);
+                                                    echo $date->format('d.M.Y');
+                                                ?>
+                                            </td>
+                                            <td>
+                                                <?php
+                                                    $date = new DateTime($value['todte']);
+                                                    echo $date->format('d.M.Y');
+                                                ?>
+                                            </td>
                                             <td><?php echo $value['status'];?></td>
-                                            <td></td>
+                                            <td style="cursor: pointer;">
+                                                <?php if ($value['status'] === 'Requested'){ ?>
+                                                    <i class="fa fa-edit" title="Edit Leave" onclick="editLeave(<?php echo $value['id']; ?>, <?php echo $_GET['id']; ?>)"></i>
+
+                                                    <i class="fa fa-trash" title="Delete Leave" onclick="deleteLeave(<?php echo $value['id']; ?>)"></i>
+
+                                                <?php }else{ ?>
+                                                    <span title="Editing not allowed"><i class="fa fa-edit" style="color: gray;"></i></span>
+                                                <?php } ?>
+                                            </td>
+
                                         </tr>
                                     <? $no++;}
-                                    // }
-                                    ?>
+                                ?>
                             </tbody> 
                         </table>
                     </div>
@@ -141,7 +159,6 @@
                     }
                     if (response.success && response.details && response.details.length > 0) {
                         const leaveDetails = response.details[0];
-                        console.log(leaveDetails);
 
                         document.getElementById('lname').innerText = leaveDetails.text;
                         document.getElementById('totAllowed').innerText = leaveDetails.total;
@@ -152,10 +169,6 @@
                     } else {
                         console.error('Response structure is unexpected:', response);
                     }
-                },
-                error: function(xhr, status, error) {
-                    console.error('AJAX Error:', status, error);
-                    alert('An error occurred while submitting the form.');
                 }
             });
         }
@@ -183,6 +196,10 @@
 
                 var leaveBalance = $('#totRemaining').text();
 
+                // console.log(differenceInDays);
+                // console.log('_');
+                // console.log(leaveBalance);
+
                 if( differenceInDays > leaveBalance ){
                     alert('You are Requesting More than the available Days');
                     return false;
@@ -196,10 +213,6 @@
                             myModalEl.classList.remove('show');
                             myModalEl.style.display = 'none';
                             location.reload();
-                        },
-                        error: function(xhr, status, error) {
-                            console.error('AJAX Error:', status, error);
-                            alert('An error occurred while submitting the form.');
                         }
                     });
                 }
@@ -207,5 +220,33 @@
             } else {
                 alert('Please fill in all fields.');
             }
+    }
+
+    function editLeave(id) {
+        const userid = $('#userid').val();
+        window.location.href= '../controllers/leaves_edit.php?userid='+userid+'&lid='+id;
+    }
+
+    function deleteLeave(id) {
+        const formData = {
+            id: id
+        };
+        
+        if (confirm('Are you sure you want to delete this row?')) {
+            $.ajax({
+                url: 'delete.php',
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    if (response) {
+                        location.reload();
+                    } else {
+                        console.error('Response structure is unexpected:', response);
+                    }
+                }
+            });
+        } else {
+            console.log('Delete action canceled.');
+        }
     }
 </script>
