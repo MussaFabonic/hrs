@@ -28,7 +28,9 @@ if (!isset($_SESSION['USER_ID']) || $_SESSION['USER_ID'] <= 0 ) {
 
     <link rel="apple-touch-icon" href="<?php echo BASE_URL; ?>images/favicon.ico">
     <link rel="shortcut icon" href="<?php echo BASE_URL; ?>images/favicon.ico">
-
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.4/jquery-confirm.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.4/jquery-confirm.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.0/normalize.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
@@ -50,22 +52,35 @@ if (!isset($_SESSION['USER_ID']) || $_SESSION['USER_ID'] <= 0 ) {
             margin-left: -125px; 
             background-color: #f44336; 
             color: white; 
-            text-align: center; /* Centered text */
-            border-radius: 2px; /* Rounded corners */
-            padding: 16px; /* Padding */
-            position: fixed; /* Sit on top */
-            z-index: 1; /* Sit on top */
-            left: 50%; /* Center horizontally */
-            bottom: 30px; /* 30px from the bottom */
-            font-size: 17px; /* Font size */
-            transition: visibility 0s, opacity 0.5s linear; /* Fade in and out */
-            opacity: 0; /* Hidden by default */
+            text-align: center; 
+            border-radius: 2px; 
+            padding: 16px; 
+            position: fixed; 
+            z-index: 1; 
+            left: 50%; 
+            bottom: 30px; 
+            font-size: 17px; 
+            transition: visibility 0s, opacity 0.5s linear; 
+            opacity: 0; 
         }
 
         .toast.show {
-            visibility: visible; /* Show the toast */
-            opacity: 1; /* Fade in the toast */
+            visibility: visible; 
+            opacity: 1;
         }
+        .error-message {
+            color: red; 
+            background-color: #ffe6e6; 
+            border: 1px solid red; 
+            border-radius: 5px; 
+            padding: 15px; 
+            margin: 10px 0; 
+            font-family: Arial, sans-serif; 
+            font-size: 16px; 
+            display: flex; 
+            flex-direction: row; 
+        }
+
 
     </style>
 </head>

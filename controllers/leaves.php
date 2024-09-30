@@ -18,8 +18,7 @@ session_start();
         $d['leaveid'] = $_REQUEST['leaveType'];
         $d['fromdte'] = $_REQUEST['fromDate'];
         $d['todte'] = $_REQUEST['toDate'];
-        $d['noofdays'] = $daysDifference;
-        // $d['noofdays'] = $daysDifference +  1;
+        $d['noofdays'] = $daysDifference + 1;
 
         $LeaveRecords = insert($d,'LeaveRecords');
     }
@@ -29,7 +28,6 @@ session_start();
     
     $results = getAllDets($userId, YEAR);
     $_SESSION['leavesHistory'] = $results;
-    // print_r($_SESSION['leavesHistory']);die();
     $content = '../views/pages/leaves.php';
     $page = 'Leaves';
     include_once('../index.php');

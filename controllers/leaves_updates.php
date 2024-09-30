@@ -11,7 +11,7 @@ session_start();
     $dateDifference = $leaveFromDateTime->diff($leaveToDateTime);
     $daysDifference = $dateDifference->days;
 
-    $d['noofdays'] = $daysDifference;
+    $d['noofdays'] = $daysDifference + 1;
     // $d['noofdays'] = $daysDifference +  1;
 
     $details = update($id, $d,'Leaverecords');
