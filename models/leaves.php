@@ -9,6 +9,7 @@
                 WHERE YEAR(lr.fromdte) = " . $year . " AND lr.staffid = " . $staffId;
                 if ( $staffId ) $sql .= " AND lr.staffid = " . $staffId;
         $sql .= " ORDER BY lr.fromdte, 	lr.leaveid";
+        // print_r($sql);die();
         return fetchRows($sql);
     }
 

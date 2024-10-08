@@ -1,5 +1,4 @@
 <?php
-// print_r($_SESSION['leavesHistory']);die();
 ?>
 <div class="animated fadeIn" >
     <div class="row">
@@ -78,7 +77,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="mediumModalLabel">Apply For Leave</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="clearFormData();">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -115,24 +114,29 @@
                     </table>
                     <div class="form-group">
                         <label for="fromDate">From Date</label>
-                        <input type="date" id="fromDate" class="form-control" required onchange="verifyDets();">
+                        <input type="text" id="fromDate" class="form-control" required onchange="verifyDets('fromDate');" placeholder="dd/mm/yyyy">
                     </div>
                     <div class="form-group">
                         <label for="toDate">To Date</label>
-                        <input type="date" id="toDate" class="form-control" required onchange="verifyDets();">
+                        <input type="text" id="toDate" class="form-control" required onchange="verifyDets('toDate');" placeholder="dd/mm/yyyy">
                     </div>
-                    <h6 style="color : green; display : none;" id="requested_days">Number of Days Requested : <span id="count"><span></h6></br>
-                    <h6 style="display: none;" id="error_requested_days" class="error-message">
-                    You are requesting more than the available days. You requested:&nbsp;<span id="message_requested_days"></span>&nbsp;days.&nbsp;Available:&nbsp;<span id="message_remaining_days"></span>&nbsp;days.
-                    </h6>
-
+                    <div id="requested_days" class="alert alert-success mt-4" style="display: none;">
+                        Number of Days Requested: <span id="count"></span>
+                    </div>
+                    <div id="error_requested_days" class="alert alert-danger mt-4" style="display: none;">
+                        You are requesting more than the available days. You requested: 
+                        <span id="message_requested_days"></span> days. 
+                        Available: <span id="message_remaining_days"></span> days.
+                    </div>
 
 
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" id="confirmBtn" class="btn btn-primary" onclick="submitLeaveForm()" style="display : none;">Confirm</button>
+                <div class="w-100 d-flex">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-dismiss="modal" onclick="clearFormData();">Cancel</button>
+                    <button type="button" id="confirmBtn" class="btn btn-primary rounded-pill ml-2" onclick="submitLeaveForm()" style="display: none;">Confirm</button>
+                </div>
             </div>
         </div>
     </div>
@@ -140,6 +144,22 @@
 
 
 <script>
+
+    $(function() {
+        $("#fromDate").datepicker({
+            dateFormat: "dd/mm/yy",
+            onSelect: function(dateText) {
+                verifyDets('fromDate');
+            }
+        });
+
+        $("#toDate").datepicker({
+            dateFormat: "dd/mm/yy",
+            onSelect: function(dateText) {
+                verifyDets('toDate');
+            }
+        });
+    });
         function showLeaveStatus() {
             var leaveTypeId = $('#leaveType').val();
             var userid = $('#userid').val();
@@ -150,6 +170,7 @@
                 leaveType: leaveTypeId,
                 userid: userid
             };
+            
             $.ajax({
                 url: 'leaves_details.php',
                 type: 'POST',
@@ -174,7 +195,7 @@
                         document.getElementById('totRemaining').innerText = leaveDetails.bal;
                         document.getElementById('leaveStatus').style.display = 'table';
                         $('#leaveStatus').show();
-                        verifyDets();
+                        verifyDets('fromDate');
                     } else {
                         console.error('Response structure is unexpected:', response);
                     }
@@ -191,15 +212,22 @@
                 const userid = $('#userid').val();
 
                 if (leaveType && fromDate && toDate) {
+                    const finalFromDate = parseDateToISO(fromDate);
+                    const finaltoDate = parseDateToISO(toDate);
+
+                    // console.log(finalFromDate);
+                    // console.log(finaltoDate);
+
+                    // return false;
                     const formData = {
                         leaveType: leaveType,
-                        fromDate: fromDate,
-                        toDate: toDate,
+                        fromDate: finalFromDate,
+                        toDate: finaltoDate,
                         userid: userid
                     };
 
-                    const startDate = new Date(fromDate);
-                    const endDate = new Date(toDate);
+                    const startDate = parseDate(fromDate);
+                    const endDate = parseDate(toDate);
 
                     const differenceInTime = endDate - startDate;
                     const differenceInDays = differenceInTime / (1000 * 3600 * 24) + 1;
@@ -267,15 +295,44 @@
         }
     }
 
-    function verifyDets(){
+    function verifyDets(field){
         const leaveType = document.getElementById('leaveType').value;
         const fromDate = document.getElementById('fromDate').value;
         const toDate = document.getElementById('toDate').value;
         const leaveBalance1 = $('#totRemaining').text();
+
+        
+
+        if( toDate && fromDate ){
+            const fromDateString = document.getElementById('fromDate').value;
+            const toDateString = document.getElementById('toDate').value;
+
+            const fromDate1 = parseDate(fromDateString);
+            const toDate1 = parseDate(toDateString);
+        
+            if (toDate1 < fromDate1) {
+                alert("To Date cannot be before From Date.");
+                document.getElementById('toDate').value = '';
+                $('#requested_days').hide();
+                $('#message_requested_days').hide();
+                $('#message_remaining_days').hide();
+                $('#error_requested_days').hide();
+                $('#confirmBtn').hide();
+                return false;
+            }
+        }
+
+        
+        
         if(leaveType && fromDate && toDate){
+
+            const formattedFromDate = formatDate(fromDate);
+            const formattedToDate = formatDate(toDate);
+
             $('#requested_days').show();
-            const startDate = new Date(fromDate);
-            const endDate = new Date(toDate);
+            const startDate = parseDate(fromDate);
+            const endDate = parseDate(toDate);
+
             const differenceInTime = endDate - startDate;
             const differenceInDays = differenceInTime / (1000 * 3600 * 24) + 1;
 
@@ -283,7 +340,6 @@
 
             if( differenceInDays > leaveBalance1 ){
 
-                // $('#requested_days').hide();
                 $('#error_requested_days').show();
                 $('#message_requested_days').text(differenceInDays);
                 $('#message_remaining_days').text(leaveBalance1);
@@ -295,4 +351,35 @@
             }
         }
     }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const day = date.getDate();
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+
+        return `${day}/${month}/${year}`;
+    }
+
+
+    function clearFormData() {
+        document.getElementById('leaveForm').reset();
+        document.getElementById('leaveStatus').style.display = 'none';
+        document.getElementById('requested_days').style.display = 'none';
+        document.getElementById('error_requested_days').style.display = 'none';
+    }
+
+    function parseDate(dateString) {
+        const [day, month, year] = dateString.split('/');
+        return new Date(year, month - 1, day);
+    }
+
+    function parseDateToISO(dateString) {
+        const [day, month, year] = dateString.split('/');
+        const dateObj = new Date(year, month - 1, day);
+        
+        const formattedDate = dateObj.toISOString().split('T')[0];
+        return formattedDate;
+    }
+
 </script>

@@ -2,6 +2,8 @@
 session_start();
     include('../models/leaves.php');
     $eT = getET($_REQUEST['userid']); 
+    // print_r($_REQUEST['userid']);
+// die();
     $d['leaveid'] = $_REQUEST['leaveType'];
     
     if(isset( $_REQUEST['lrid'])){
@@ -11,7 +13,7 @@ session_start();
     }
 
     $dets = getIdName('', 1,  $d['leaveid'], '', YEAR, $eT['emptypeid']);
-    
+    // print_r($dets);die();
     $response = array();
 
     foreach ((array)$dets as $ic) {

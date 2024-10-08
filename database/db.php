@@ -51,12 +51,11 @@
 		} else return false;
 	}
 
-	function getField($table, $id, $fieldName)
+	function getField($id)
 	{
-		$$table = new $table();
-
-		$output = $$table->getColsNSingleRow($fieldName, array('id' => $id));
-		return $output[$fieldName];
+		$sql = "SELECT id FROM Staffs WHERE userid = " . $id;
+		// print_r($sql);die();
+		return fetchRow($sql);
 	}
 
 	function getName($table, $id)
@@ -107,13 +106,13 @@
 		
 		$sql = 'select * from `' . strtolower($tableName) . '` where ' . $whereClause . ' ' . $excludeClause;
 		if ( $sortby ) $sql .= ' order by ' . $sortby;
-		// echo $sql .'<br />';
-		// die('bulb');
 		return fetchRows($sql);
 	}
 
 	function getET($id) {
-		$sql = "SELECT emptypeid FROM staffs WHERE id = " . $id;
+		$sql = "SELECT emptypeid FROM staffs WHERE userid = " . $id;
+		// echo $sql .'<br />';
+		// die('bulb');
 		return fetchRow($sql);
 	}
 
@@ -132,8 +131,9 @@
 
 	function getLeavesTaken($staffId, $year=YEAR, $leaveId="",$id="") {
 		$sql = "SELECT sum(datediff(if(todte > '" . $year . "-12-31', '" . $year . "-12-31', todte), fromdte) + 1) AS taken 
-				FROM leaverecords WHERE YEAR(fromdte) = " . $year . " AND leaveid = " . $leaveId . " AND staffid = " . $staffId;
-		if ( $id ) $sql .= " and id  != " . $id;
+				FROM leaverecords INNER JOIN staffs s ON leaverecords.staffid = s.id WHERE leaverecords.status = 'Approved' AND YEAR(fromdte) = " . $year . " AND leaveid = " . $leaveId . " AND s.userid = " . $staffId;
+		if ( $id ) $sql .= " and s.id  != " . $id;
+		// echo $sql;die();
 		return fetchRow($sql);
 	}
 
@@ -165,6 +165,107 @@
 		// echo $sql.'<br/>';
 		// die('bulb');
 		return executeQuery($sql);
+	}
+
+	function getColumns($columns, $wC, $oC='',$table) {
+		$sql = "SELECT " . $columns . " FROM `" . $table . "`";
+		$whereClause = array();
+		foreach ( $wC as $iid=>$val ) {
+			$whereClause[] = '`' . $iid . '`' . ' = "' . $val . '"';
+		}
+		$whereClause = implode(' AND ', $whereClause);
+		if ( $wC ) $sql .= " WHERE 1 = 1 AND " . $whereClause;
+		if ( $oC ) $sql .= " ORDER BY " . $oC;
+		return fetchRows($sql);
+	}
+
+	function getColsNSingleRow($columns, $wC,$table) {
+		$sql = "SELECT " . $columns . " FROM `" . $table . "`";
+		$whereClause = array();
+		foreach ( $wC as $iid=>$val ) {
+			$whereClause[] = '`' . $iid . '`' . ' = "' . $val . '"';
+		}
+		$whereClause = implode('AND ', $whereClause);
+		if ( $wC ) $sql .= " WHERE 1 = 1 AND " . $whereClause;
+		return fetchRow($sql);
+	}
+
+	function getUnapprovedRecords($appId="") {
+		$sql = "SELECT id FROM `leaverecords` lr WHERE status != 'Approved' AND completed = '".$appId."'";
+		return fetchRows($sql);
+	}
+
+	function numberToOrdinal($num) {
+		$ordinals = [
+			1 => 'First', 2 => 'Second', 3 => 'Third', 4 => 'Fourth', 5 => 'Fifth',
+			6 => 'Sixth', 7 => 'Seventh', 8 => 'Eighth', 9 => 'Ninth', 10 => 'Tenth',
+			11 => 'Eleventh', 12 => 'Twelfth', 13 => 'Thirteenth', 14 => 'Fourteenth',
+			15 => 'fifteenth', 16 => 'sixteenth', 17 => 'seventeenth', 18 => 'eighteenth',
+			19 => 'nineteenth', 20 => 'twentieth', 30 => 'thirtieth', 40 => 'fortieth',
+			50 => 'fiftieth', 60 => 'sixtieth', 70 => 'seventieth', 80 => 'eightieth',
+			90 => 'ninetieth'
+		];
+	
+		if (isset($ordinals[$num])) {
+			return $ordinals[$num];
+		}
+	
+		if ($num < 100) {
+			return $ordinals[(int)($num / 10) * 10] . ($num % 10 ? '-' . $ordinals[$num % 10] : '');
+		}
+	
+		if ($num < 1000) {
+			return numberToOrdinal((int)($num / 100)) . ' hundred' . ($num % 100 ? ' and ' . numberToOrdinal($num % 100) : '');
+		}
+	
+		return $num . 'th';
+	}
+
+
+
+	function setNotifForPendingLeaveRequests($userId)
+	{
+
+		$appr = getColumns('approvalid as id', array('status' => 1),'','LeaveApprovals');
+		
+		foreach($appr as $key=>$val){
+			$details = getColsNSingleRow('*', array('approvalid'=>$val['id'],'status' => 1),'ApprovalRights');
+			if($details['approvalid']){
+				
+				$orderNo = $details['approvalid'];
+				$appNO = $orderNo - 1;
+				
+				$dets = getUnapprovedRecords($appNO);
+				$notMessage = 'You Have ' . count($dets).' '. numberToOrdinal($orderNo). ' approval For leave requests.';
+				$notLink = '?module=leaves&action=leaverecords&approval='.$appNO;
+				$notDate = date('Y-m-d');;
+
+				$notifFound = find(array('link' => $notLink, 'userid' => $userId),'','','','Notifications');
+				
+				if (!empty($notifFound)) {
+					if (!$dets) {
+						real_delete($notifFound[0]['id'],'Notifications');
+					} else {
+						update($notifFound[0]['id'], array('notification' => $notMessage, 'seen' => 0),'Notifications');
+					}
+				} else {
+					if ($dets) {
+						find(array('link' => $notLink, 'date' => $notDate, 'notification' => $notMessage, 'userid' => $userId, 'seen' => 0),'','','','Notifications');
+						if (!$notifFound) {
+							$notDets['notification'] = $notMessage;
+							$notDets['link'] = $notLink;
+							$notDets['date'] = $notDate;
+							$notDets['seen'] = 0;
+							$notDets['userid'] = $userId;
+							$notDets['category'] = $notCategory;
+							insert($notDets,'Notifications');
+						}
+					}
+				}
+			}
+
+		}
+
 	}
 
 ?>

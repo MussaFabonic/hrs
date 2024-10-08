@@ -1,5 +1,10 @@
 <?php
-// print_r($_SESSION['leavesHistory']);die();
+if (isset($_SESSION['dets']['fromdte'])) {
+    $fromDate = new DateTime($_SESSION['dets']['fromdte']);
+} 
+if (isset($_SESSION['dets']['todte'])) {
+    $toDate = new DateTime($_SESSION['dets']['todte']);
+} 
 ?>
 <div class="animated fadeIn" >
     <div class="row">
@@ -41,21 +46,23 @@
                         </div>
                         <div class="form-group">
                             <div class="input-group">
-                                <div class="input-group-addon"><i class="fa fa-envelope"></i></div>
-                                <input type="date" id="fromdte" name="fromdte" placeholder="From Date" value="<?php echo $_SESSION['dets']['fromdte']?>" class="form-control" onchange="verifyDets();">
+                                <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
+                                <input type="text" id="fromdte" name="fromdte" placeholder="From Date" value="<?php echo $fromDate->format('d/m/Y')?>" class="form-control" onchange="verifyDets('fromDate');">
                             </div>
                         </div>
                         <div class="form-group">
                             <div class="input-group">
-                                <div class="input-group-addon"><i class="fa fa-asterisk"></i></div>
-                                <input type="date" id="todte" name="todte" placeholder="To Date" value="<?php echo $_SESSION['dets']['todte']?>" class="form-control" onchange="verifyDets();">
+                                <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
+                                <input type="text" id="todte" name="todte" placeholder="To Date" value="<?php echo $toDate->format('d/m/Y')?>" class="form-control" onchange="verifyDets('toDate');">
                             </div>
                         </div>
-                        <h6 style="color : green; display : none;" id="requested_days">Number of Days Requested : <span id="count"><span></h6></br>
-                        <h6 style="display: none;" id="error_requested_days" class="error-message">
-                        You are requesting more than the available days. You requested:&nbsp;<span id="message_requested_days"></span>&nbsp;days.&nbsp;Available:&nbsp;<span id="message_remaining_days"></span>&nbsp;days.
-                        </h6>
-                        <div class="form-actions form-group"><a type="submit" id="confirmBtn" class="btn btn-success btn-sm" onClick="submitLeaveForm()">Save</a>  <a type="submit" class="btn btn-danger btn-sm" onClick="back()">Back</a></div>
+                        <div id="requested_days" style="display:none;" class="alert alert-success mt-4">
+                            Number of Days Requested: <span id="count"></span>
+                        </div>
+                        <div id="error_requested_days" style="display:none;" class="alert alert-danger mt-4">
+                            You are requesting more than the available days. You requested: <span id="message_requested_days"></span> days. Available: <span id="message_remaining_days"></span> days.
+                        </div>
+                        <div class="form-actions form-group"><button type="button" id="confirmBtn" class="btn btn-primary" onClick="submitLeaveForm()">Confirm</button>  <button type="button" class="btn btn-secondary" onClick="back()">Back</button></div>
                     </form>
                 </div>
             </div>
@@ -76,7 +83,22 @@
 <script>
         $(document).ready(function() {
             showLeaveStatus();
-        });
+
+
+            $("#fromdte").datepicker({
+                dateFormat: "dd/mm/yy",
+                onSelect: function(dateText) {
+                    verifyDets('fromdte');
+                }
+            });
+
+            $("#todte").datepicker({
+                dateFormat: "dd/mm/yy",
+                onSelect: function(dateText) {
+                    verifyDets('toDate');
+                 }
+                });
+            });
 
         function showLeaveStatus() {
             var leaveTypeId = $('#leaveType').val();
@@ -114,7 +136,7 @@
                         document.getElementById('totRemaining').innerText = leaveDetails.bal;
                         document.getElementById('leaveStatus').style.display = 'table';
                         $('#leaveStatus').show();
-                        verifyDets();
+                        verifyDets('fromDate');
                     } else {
                         console.error('Response structure is unexpected:', response);
                     }
@@ -130,16 +152,19 @@
             const lid = '<?php echo $_GET['lid']?>';
             
             if (leaveType && fromDate && toDate) {
+                const finalFromDate = parseDateToISO(fromDate);
+                const finaltoDate = parseDateToISO(toDate);
+
                 const formData = {
                     leaveType: leaveType,
-                    fromDate: fromDate,
-                    toDate: toDate,
+                    fromDate: finalFromDate,
+                    toDate: finaltoDate,
                     userid: userid,
                     id : lid
                 };
 
-            const startDate = new Date(fromDate);
-            const endDate = new Date(toDate);
+            const startDate = parseDate(fromDate);
+            const endDate = parseDate(toDate);
 
             const differenceInTime = endDate - startDate;
             const differenceInDays = differenceInTime / (1000 * 3600 * 24) + 1;
@@ -168,27 +193,48 @@
         window.location.href= '../controllers/leaves.php?id='+userid;
     }
 
-    function verifyDets(){
+    function verifyDets(field){
         const leaveType = document.getElementById('leaveType').value;
         const fromDate = document.getElementById('fromdte').value;
         const toDate = document.getElementById('todte').value;
         const leaveBalance1 = $('#totRemaining').text();
-        console.log(leaveBalance1);
+
+        if( toDate && fromDate ){
+            const fromDateString = document.getElementById('fromdte').value;
+            const toDateString = document.getElementById('todte').value;
+
+            const fromDate1 = parseDate(fromDateString);
+            const toDate1 = parseDate(toDateString);
+        
+            if (toDate1 < fromDate1) {
+                alert("To Date cannot be before From Date.");
+                document.getElementById('todte').value = '';
+                $('#requested_days').hide();
+                $('#message_requested_days').hide();
+                $('#message_remaining_days').hide();
+                $('#error_requested_days').hide();
+                $('#confirmBtn').hide();
+                return false;
+            }else{
+                $('#confirmBtn').show();
+            }
+        }
+
+
         if(leaveType && fromDate && toDate){
-            const startDate = new Date(fromDate);
-            const endDate = new Date(toDate);
-            // (leaveType);
+
+            const formattedFromDate = formatDate(fromDate);
+            const formattedToDate = formatDate(toDate);
+
+            const startDate = parseDate(fromDate);
+            const endDate = parseDate(toDate);
 
             const differenceInTime = endDate - startDate;
             const differenceInDays = differenceInTime / (1000 * 3600 * 24) + 1;
 
             $('#count').text(differenceInDays);
 
-            
-            // console.log(leaveBalance1);
-
             if( differenceInDays > leaveBalance1 ){
-
                 $('#requested_days').hide();
                 $('#error_requested_days').show();
                 $('#message_requested_days').text(differenceInDays);
@@ -200,6 +246,28 @@
                 $('#confirmBtn').show();
             }
         }
+    }
+
+    function parseDate(dateString) {
+        const [day, month, year] = dateString.split('/');
+        return new Date(year, month - 1, day);
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const day = date.getDate();
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+
+        return `${day}/${month}/${year}`;
+    }
+
+    function parseDateToISO(dateString) {
+        const [day, month, year] = dateString.split('/');
+        const dateObj = new Date(year, month - 1, day);
+        
+        const formattedDate = dateObj.toISOString().split('T')[0];
+        return formattedDate;
     }
 </script>
 

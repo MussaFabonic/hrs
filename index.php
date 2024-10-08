@@ -42,6 +42,8 @@ if (!isset($_SESSION['USER_ID']) || $_SESSION['USER_ID'] <= 0 ) {
     <link rel="stylesheet" href="assets/css/cs-skin-elastic.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         b {
             display: none;
@@ -81,6 +83,27 @@ if (!isset($_SESSION['USER_ID']) || $_SESSION['USER_ID'] <= 0 ) {
             flex-direction: row; 
         }
 
+        .card {
+        border-radius: 10px;
+        }
+        .input-group-text {
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px;
+        }
+        .form-control {
+            border-radius: 0px 10px 10px 0px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            border-radius: 30px;
+        }
+        .btn-secondary {
+            border-radius: 30px;
+        }
+
+
+        
 
     </style>
 </head>
@@ -139,6 +162,8 @@ if (!isset($_SESSION['USER_ID']) || $_SESSION['USER_ID'] <= 0 ) {
     <script src="<?php echo BASE_URL; ?>assets/js/lib/data-table/buttons.print.min.js"></script>
     <script src="<?php echo BASE_URL; ?>assets/js/lib/data-table/buttons.colVis.min.js"></script>
     <script src="<?php echo BASE_URL; ?>assets/js/init/datatables-init.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
     <script type="text/javascript">
         $(document).ready(function() {
